@@ -1,0 +1,2 @@
+- After pulling, run: npm i -D tailwindcss postcss autoprefixer
+- If Tailwind added now, restart dev server.
