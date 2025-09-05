@@ -1,6 +1,5 @@
 import { useAuth } from '../context/AuthContext';
-
-export default function Profile() {
+export default function Profile(){
   const { user } = useAuth();
   return (
     <div className="p-4 bg-white rounded-2xl border">

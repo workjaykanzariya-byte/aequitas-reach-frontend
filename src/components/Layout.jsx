@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
-
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b">
@@ -15,7 +14,6 @@ export default function Layout({ children }) {
           </div>
         </div>
       </header>
-
       <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-12 gap-6">
         <aside className="col-span-12 md:col-span-3 lg:col-span-2">
           <nav className="bg-white rounded-2xl border p-3 space-y-2">
@@ -26,10 +24,7 @@ export default function Layout({ children }) {
             )}
           </nav>
         </aside>
-
-        <main className="col-span-12 md:col-span-9 lg:col-span-10">
-          {children}
-        </main>
+        <main className="col-span-12 md:col-span-9 lg:col-span-10">{children}</main>
       </div>
     </div>
   );
