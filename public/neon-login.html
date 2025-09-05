@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neon Login Card</title>
+  <style>
+    :root {
+      --cyan: #00faff;
+      --dark-bg: #0a0f1e;
+      --panel-bg: #0e172a;
+      --gradient-start: #00faff;
+      --gradient-end: #0050ff;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--dark-bg);
+      font-family: Arial, Helvetica, sans-serif;
+      color: #fff;
+    }
+    .card {
+      width: 850px;
+      max-width: 95%;
+      background: var(--panel-bg);
+      border-radius: 20px;
+      box-shadow: 0 0 25px rgba(0, 250, 255, 0.4);
+      overflow: hidden;
+      display: flex;
+    }
+    .left, .right {
+      flex: 1;
+      padding: 40px;
+    }
+    .left {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 20px;
+    }
+    .left h2 {
+      margin: 0 0 10px;
+      color: var(--cyan);
+      text-shadow: 0 0 10px var(--cyan);
+    }
+    .input-group {
+      position: relative;
+    }
+    .input-group svg {
+      position: absolute;
+      top: 50%;
+      left: 12px;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      fill: var(--cyan);
+      pointer-events: none;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 12px 12px 12px 44px;
+      background: #0c1a2d;
+      border: 2px solid #00faff55;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+      transition: box-shadow 0.3s, border 0.3s;
+    }
+    .input-group input:focus {
+      border: 2px solid var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+    }
+    .btn {
+      width: 100%;
+      padding: 12px 0;
+      border: none;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+      color: #000;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 15px var(--cyan);
+      transition: opacity 0.3s;
+    }
+    .btn:hover {
+      opacity: 0.85;
+    }
+    .signup {
+      text-align: center;
+      font-size: 14px;
+    }
+    .signup a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+    .right {
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 10px;
+      color: #000;
+    }
+    .right h2 {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: 2px;
+    }
+    .right p {
+      margin: 0;
+      font-size: 14px;
+    }
+    @media (max-width: 700px) {
+      .card {
+        flex-direction: column;
+      }
+      .right, .left {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="left">
+      <h2>Login</h2>
+      <div class="input-group">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8V21.6h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+        <input type="text" placeholder="Username" />
+      </div>
+      <div class="input-group">
+        <svg viewBox="0 0 24 24"><path d="M12 1.8c-3.3 0-6 2.7-6 6v3H4v12h16V10.8h-2v-3c0-3.3-2.7-6-6-6zm3.6 9H8.4v-3c0-2 1.6-3.6 3.6-3.6s3.6 1.6 3.6 3.6v3z"/></svg>
+        <input type="password" placeholder="Password" />
+      </div>
+      <button class="btn">Login</button>
+      <div class="signup">Don't have an account? <a href="#">Sign Up</a></div>
+    </div>
+    <div class="right">
+      <h2>WELCOME BACK!</h2>
+      <p>We're glad to see you again. Stay secure and log in to continue.</p>
+    </div>
+  </div>
+</body>
+</html>
