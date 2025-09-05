@@ -1,5 +1,5 @@
 {
-  "//": "Added Tailwind CSS tooling; previously missing so styles didn't compile",
+  "//": "Tailwind failed to load because autoprefixer wasn't installed; moved styling tools to dev dependencies",
   "name": "aequitas-reach-frontend",
   "private": true,
   "version": "0.0.0",
@@ -11,11 +11,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tailwindcss/cli": "^4.1.13",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.8.2",
-    "tailwindcss": "^4.1.13"
+    "react-router-dom": "^7.8.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

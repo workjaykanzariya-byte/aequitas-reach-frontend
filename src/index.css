@@ -1,4 +1,4 @@
-/* Removed Vite boilerplate CSS; Tailwind's preflight now handles base styles */
+/* Tailwind directives inject styles at build time; without this file Tailwind never output any CSS */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
