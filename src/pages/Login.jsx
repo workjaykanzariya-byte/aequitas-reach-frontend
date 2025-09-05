@@ -7,6 +7,7 @@ export default function Login() {
   const { login } = useAuth();
   const [form, setForm] = useState({ email: '', password: '' });
   const [err, setErr] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -65,10 +66,10 @@ export default function Login() {
                 </a>
               </div>
             </div>
-            <div className="mt-2">
+            <div className="relative mt-2">
               <input
                 id="password"
-                type="password"
+                type={showPwd ? 'text' : 'password'}
                 name="password"
                 required
                 autoComplete="current-password"
@@ -77,6 +78,59 @@ export default function Login() {
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="Secret123!"
               />
+              <button
+                type="button"
+                onClick={() => setShowPwd(!showPwd)}
+                className="absolute inset-y-0 right-2 flex items-center"
+                aria-label={showPwd ? 'Hide password' : 'Show password'}
+              >
+                {showPwd ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    className="h-5 w-5 text-gray-400"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3.98 8.223C2.386 9.72 1.5 11.335 1.5 12c0 .664.886 2.279 2.48 3.777C5.573 17.27 8.584 19.5 12 19.5c3.417 0 6.428-2.23 8.02-3.723C21.614 14.279 22.5 12.664 22.5 12c0-.665-.886-2.28-2.48-3.777C18.428 6.73 15.417 4.5 12 4.5c-3.416 0-6.427 2.23-8.02 3.723Z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0Z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 3l18 18"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    className="h-5 w-5 text-gray-400"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12s-4.5 7.5-10.5 7.5S1.5 12 1.5 12Z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5Z"
+                    />
+                  </svg>
+                )}
+              </button>
             </div>
           </div>
 
@@ -90,12 +144,6 @@ export default function Login() {
           </div>
         </form>
 
-        <p className="mt-10 text-center text-sm text-gray-400">
-          Not a member?{' '}
-          <a href="#" className="font-semibold text-indigo-400 hover:text-indigo-300">
-            Start a 14 day free trial
-          </a>
-        </p>
       </div>
     </div>
   );
