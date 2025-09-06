@@ -1,22 +1,43 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { mockGetCampaigns, mockExecuteCampaign } from '../lib/api';
+import { mockGetCampaigns, mockExecuteCampaign, mockGetPeople, mockAssignCampaignToMember, mockAssignCampaignToUser } from '../lib/api';
+import { useNavigate } from 'react-router-dom';
+
+function PickerModal({ open, title, items, onSelect, onClose }){
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold">{title}</h3>
+          <button onClick={onClose} className="text-sm px-2 py-1 rounded-lg border">Close</button>
+        </div>
+        <div className="max-h-72 overflow-auto divide-y">
+          {items.map(it=>(
+            <button key={it.id} onClick={()=>onSelect(it)} className="w-full text-left px-3 py-2 hover:bg-slate-50">
+              <div className="font-medium">{it.name}</div>
+              <div className="text-xs text-slate-500">{it.email}</div>
+            </button>
+          ))}
+          {items.length===0 && <div className="px-3 py-6 text-center text-slate-500 text-sm">No items</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Campaigns(){
   const { user } = useAuth();
+  const nav = useNavigate();
   const [list, setList] = useState([]);
   const [tab, setTab] = useState('all'); // 'all' | 'mine'
   const [toast, setToast] = useState('');
+  const [picker, setPicker] = useState({ open:false, forCampaign:null, items:[], mode:null }); // mode: 'member' | 'user'
 
-  useEffect(()=>{ (async ()=>{
-    const data = await mockGetCampaigns();
-    setList(data);
-  })(); },[]);
+  useEffect(()=>{ (async ()=> setList(await mockGetCampaigns()))(); },[]);
 
   const visible = useMemo(()=>{
-    if (tab==='mine' && user) {
-      return list.filter(c => c.assignees.includes(user.id));
-    }
+    if (tab==='mine' && user) return list.filter(c => c.assignees.includes(user.id));
     return list;
   }, [tab, list, user]);
 
@@ -33,6 +54,36 @@ export default function Campaigns(){
     }
   };
 
+  const openAssignToMember = async (c)=>{
+    const members = await mockGetPeople('member');
+    setPicker({ open:true, forCampaign:c, items:members, mode:'member' });
+  };
+  const openAssignToUser = async (c)=>{
+    const users = await mockGetPeople('user');
+    setPicker({ open:true, forCampaign:c, items:users, mode:'user' });
+  };
+
+  const selectFromPicker = async (person)=>{
+    if (!picker.forCampaign) return;
+    try{
+      if (picker.mode==='member') {
+        await mockAssignCampaignToMember(picker.forCampaign.id, person.id, user);
+        setToast('Assigned to member');
+      } else if (picker.mode==='user') {
+        await mockAssignCampaignToUser(picker.forCampaign.id, person.id, user);
+        setToast('Assigned to user');
+      }
+      // refresh local list
+      const fresh = await mockGetCampaigns();
+      setList(fresh);
+    }catch(e){
+      setToast(e.message || 'Assignment failed');
+    }finally{
+      setPicker({ open:false, forCampaign:null, items:[], mode:null });
+      setTimeout(()=>setToast(''), 1400);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -40,6 +91,9 @@ export default function Campaigns(){
         <div className="flex gap-2">
           <button onClick={()=>setTab('all')}  className={`px-3 py-1.5 rounded-xl border ${tab==='all'?'bg-black text-white':'hover:bg-slate-100'}`}>All</button>
           <button onClick={()=>setTab('mine')} className={`px-3 py-1.5 rounded-xl border ${tab==='mine'?'bg-black text-white':'hover:bg-slate-100'}`}>Assigned to me</button>
+          {/* Quick access to lists */}
+          {user?.role==='admin' && <button onClick={()=>nav('/members')} className="px-3 py-1.5 rounded-xl border hover:bg-slate-100">All Members</button>}
+          {(user?.role==='admin' || user?.role==='member') && <button onClick={()=>nav('/users')} className="px-3 py-1.5 rounded-xl border hover:bg-slate-100">All Users</button>}
         </div>
       </div>
 
@@ -53,38 +107,39 @@ export default function Campaigns(){
               <th className="text-left px-4 py-2">Name</th>
               <th className="text-left px-4 py-2">Status</th>
               <th className="text-left px-4 py-2">Assigned?</th>
-              <th className="text-left px-4 py-2">Action</th>
+              <th className="text-left px-4 py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
             {visible.map(c=>{
-              const assigned = user ? c.assignees.includes(user.id) : false;
-              const allowed  = user?.role === 'admin' || (user?.role === 'member' && assigned);
+              const assignedToMe = user ? c.assignees.includes(user.id) : false;
+              const canExecute = (user?.role==='admin') || (user?.role==='member' && assignedToMe) || (user?.role==='user' && assignedToMe);
               return (
                 <tr key={c.id} className="border-t">
                   <td className="px-4 py-2">{c.id}</td>
                   <td className="px-4 py-2">{c.name}</td>
                   <td className="px-4 py-2">{c.status}</td>
-                  <td className="px-4 py-2">{assigned ? 'Yes' : 'No'}</td>
-                  <td className="px-4 py-2">
-                    <button
-                      onClick={()=>execute(c.id)}
-                      disabled={!allowed}
-                      className={`px-3 py-1.5 rounded-xl ${allowed?'bg-indigo-600 text-white hover:bg-indigo-500':'bg-slate-200 text-slate-500 cursor-not-allowed'}`}
-                      title={allowed ? 'Execute campaign' : 'You are not allowed to execute this campaign'}
-                    >
-                      Execute
-                    </button>
+                  <td className="px-4 py-2">{assignedToMe ? 'Yes' : 'No'}</td>
+                  <td className="px-4 py-2 flex flex-wrap gap-2">
+                    <button onClick={()=>execute(c.id)} disabled={!canExecute} className={`px-3 py-1.5 rounded-xl ${canExecute?'bg-indigo-600 text-white hover:bg-indigo-500':'bg-slate-200 text-slate-500 cursor-not-allowed'}`}>Execute</button>
+                    {user?.role==='admin'  && <button onClick={()=>openAssignToMember(c)} className="px-3 py-1.5 rounded-xl border hover:bg-slate-100">Assign Member</button>}
+                    {user?.role==='member' && <button onClick={()=>openAssignToUser(c)}   className="px-3 py-1.5 rounded-xl border hover:bg-slate-100">Assign User</button>}
                   </td>
                 </tr>
               );
             })}
-            {visible.length===0 && (
-              <tr><td colSpan="5" className="px-4 py-6 text-center text-slate-500">No campaigns</td></tr>
-            )}
+            {visible.length===0 && <tr><td colSpan="5" className="px-4 py-6 text-center text-slate-500">No campaigns</td></tr>}
           </tbody>
         </table>
       </div>
+
+      <PickerModal
+        open={picker.open}
+        title={picker.mode==='member' ? 'Assign to Member' : 'Assign to User'}
+        items={picker.items}
+        onSelect={selectFromPicker}
+        onClose={()=>setPicker({ open:false, forCampaign:null, items:[], mode:null })}
+      />
     </div>
   );
 }
