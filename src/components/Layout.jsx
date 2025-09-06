@@ -10,7 +10,7 @@ export default function Layout({ children }) {
           <Link to="/dashboard" className="font-semibold">Aequitas Reach</Link>
           <div className="flex items-center gap-4">
             <span className="text-sm text-slate-600">{user?.name} • {user?.role}</span>
-            <button onClick={logout} className="text-sm px-3 py-1.5 rounded-xl border">Logout</button>
+            <button onClick={logout} className="btn">Logout</button>
           </div>
         </div>
       </header>

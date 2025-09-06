@@ -39,7 +39,7 @@ export default function AdminSettings() {
           </label>
         ))}
         <div className="md:col-span-2">
-          <button className="px-4 py-2 rounded-xl bg-black text-white">Save</button>
+          <button className="btn">Save</button>
         </div>
       </form>
     </div>

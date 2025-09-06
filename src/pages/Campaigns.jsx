@@ -89,11 +89,11 @@ export default function Campaigns(){
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Campaigns</h1>
         <div className="flex gap-2">
-          <button onClick={()=>setTab('all')}  className={`px-3 py-1.5 rounded-xl border ${tab==='all'?'bg-black text-white':'hover:bg-slate-100'}`}>All</button>
-          <button onClick={()=>setTab('mine')} className={`px-3 py-1.5 rounded-xl border ${tab==='mine'?'bg-black text-white':'hover:bg-slate-100'}`}>Assigned to me</button>
+          <button onClick={()=>setTab('all')} className="btn">All</button>
+          <button onClick={()=>setTab('mine')} className="btn">Assigned to me</button>
           {/* Quick access to lists */}
-          {user?.role==='admin' && <button onClick={()=>nav('/members')} className="px-3 py-1.5 rounded-xl border hover:bg-slate-100">All Members</button>}
-          {(user?.role==='admin' || user?.role==='member') && <button onClick={()=>nav('/users')} className="px-3 py-1.5 rounded-xl border hover:bg-slate-100">All Users</button>}
+          {user?.role==='admin' && <button onClick={()=>nav('/members')} className="btn">All Members</button>}
+          {(user?.role==='admin' || user?.role==='member') && <button onClick={()=>nav('/users')} className="btn">All Users</button>}
         </div>
       </div>
 
@@ -121,9 +121,9 @@ export default function Campaigns(){
                   <td className="px-4 py-2">{c.status}</td>
                   <td className="px-4 py-2">{assignedToMe ? 'Yes' : 'No'}</td>
                   <td className="px-4 py-2 flex flex-wrap gap-2">
-                    <button onClick={()=>execute(c.id)} disabled={!canExecute} className={`px-3 py-1.5 rounded-xl ${canExecute?'bg-indigo-600 text-white hover:bg-indigo-500':'bg-slate-200 text-slate-500 cursor-not-allowed'}`}>Execute</button>
-                    {user?.role==='admin'  && <button onClick={()=>openAssignToMember(c)} className="px-3 py-1.5 rounded-xl border hover:bg-slate-100">Assign Member</button>}
-                    {user?.role==='member' && <button onClick={()=>openAssignToUser(c)}   className="px-3 py-1.5 rounded-xl border hover:bg-slate-100">Assign User</button>}
+                    <button onClick={()=>execute(c.id)} disabled={!canExecute} className="btn">Execute</button>
+                    {user?.role==='admin'  && <button onClick={()=>openAssignToMember(c)} className="btn">Assign Member</button>}
+                    {user?.role==='member' && <button onClick={()=>openAssignToUser(c)} className="btn">Assign User</button>}
                   </td>
                 </tr>
               );

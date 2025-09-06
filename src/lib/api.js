@@ -120,3 +120,43 @@ export async function mockAssignCampaignToUser(campaignId, userId, currentUser){
   return { message:'Assigned to user', campaignId, userId };
 }
 
+// ===== Contacts (demo, in-memory) =====
+let CONTACTS = [
+  // { id: 1, name: 'John Example', phone: '+11234567890' }
+];
+
+export async function mockGetContacts() {
+  await delay(150);
+  return CONTACTS.map(c => ({ ...c }));
+}
+
+export async function mockAddContact({ name, phone }) {
+  await delay(150);
+  const id = CONTACTS.reduce((m, c) => Math.max(m, c.id || 0), 0) + 1;
+  const clean = String(phone || '').trim();
+  CONTACTS.push({ id, name: String(name || '').trim(), phone: clean });
+  return { id };
+}
+
+export async function mockDeleteContact(id) {
+  await delay(120);
+  CONTACTS = CONTACTS.filter(c => c.id !== id);
+  return { ok: true };
+}
+
+export async function mockBulkAddContacts(items) {
+  // items: [{ name, phone }]
+  await delay(200);
+  let added = 0;
+  for (const it of items) {
+    if (!it) continue;
+    const name = String(it.name || '').trim();
+    const phone = String(it.phone || '').trim();
+    if (!phone) continue;
+    const id = CONTACTS.reduce((m, c) => Math.max(m, c.id || 0), 0) + 1;
+    CONTACTS.push({ id, name, phone });
+    added++;
+  }
+  return { added, total: CONTACTS.length };
+}
+
