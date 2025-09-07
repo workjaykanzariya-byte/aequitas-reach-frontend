@@ -1,4 +1,17 @@
-/* Tailwind directives inject styles at build time; without this file Tailwind never output any CSS */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Shared app buttons */
+@layer components {
+  .btn {
+    @apply rounded-md bg-indigo-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-400
+           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500
+           disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
+  .btn-outline {
+    @apply rounded-md border px-3 py-1.5 text-sm font-semibold hover:bg-indigo-50;
+  }
+}
+
