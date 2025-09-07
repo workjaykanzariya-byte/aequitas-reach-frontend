@@ -27,15 +27,19 @@ let CAMPAIGNS = [
 ];
 
 // ----- Templates (mock) -----
-let TEMPLATES = [
-  { id: 1, name: 'Welcome Flow' },
-  { id: 2, name: 'Promo Blast' },
+let TEMPLATES = typeof TEMPLATES !== 'undefined' ? TEMPLATES : [
+  { id: 1, name: 'Welcome Flow', html: '<p>Hi <strong>there</strong> 👋</p>', createdAt: new Date().toISOString() },
+  { id: 2, name: 'Promo Blast',  html: '<p>Don\u2019t miss our <em>offer</em>!</p>', createdAt: new Date().toISOString() },
 ];
 
-export async function mockGetTemplates() {
-  await delay(120);
-  return TEMPLATES.map(t => ({ ...t }));
-}
+// Mapping of template assignments to campaigns
+let CAMPAIGN_TEMPLATES = typeof CAMPAIGN_TEMPLATES !== 'undefined' ? CAMPAIGN_TEMPLATES : {
+  // [campaignId]: [templateId, ...]
+  103: [2], // example: VIP Outreach -> Promo Blast
+};
+
+// Helper clone
+const deepCopy = (o) => JSON.parse(JSON.stringify(o));
 
 function delay(ms=250){ return new Promise(r=>setTimeout(r, ms)); }
 function userById(id){ return USERS.find(u => u.id === id) || null; }
@@ -105,13 +109,14 @@ export async function mockBulkAddContacts(items){ await delay(180); let added=0;
  */
 export async function mockGetCampaigns(){
   await delay();
-  return CAMPAIGNS.map(c => ({
-    ...c,
-    assigneeSummaries: c.assignees
-      .map(id => userById(id))
+  return CAMPAIGNS.map(c => {
+    const assigneeSummaries = (c.assignees || [])
+      .map(id => USERS.find(u=>u.id===id))
       .filter(Boolean)
-      .map(u => ({ id:u.id, name:u.name, role:u.role })),
-  }));
+      .map(u => ({ id:u.id, name:u.name, role:u.role }));
+    const templateCount = (CAMPAIGN_TEMPLATES[c.id] || []).length;
+    return { ...deepCopy(c), assigneeSummaries, templateCount };
+  });
 }
 
 export async function mockCreateCampaign({ name, createdBy }){
@@ -159,5 +164,84 @@ export async function mockAssignCampaignToUser(campaignId, userId, currentUser){
   if (!c.assignees.includes(user.id)) c.assignees.push(user.id);
   c.status = 'assigned';
   return { message:'Assigned to user', campaignId, userId, status:c.status };
+}
+
+// ---- Campaign & Template getters ----
+export async function mockGetCampaign(campaignId){
+  await delay();
+  const c = CAMPAIGNS.find(x=>x.id===Number(campaignId));
+  if (!c) throw new Error('Campaign not found');
+  const assigneeSummaries = (c.assignees || [])
+    .map(id => USERS.find(u=>u.id===id))
+    .filter(Boolean)
+    .map(u => ({ id:u.id, name:u.name, role:u.role }));
+  const templateIds = deepCopy(CAMPAIGN_TEMPLATES[c.id] || []);
+  const templates = templateIds
+    .map(tid => TEMPLATES.find(t=>t.id===tid))
+    .filter(Boolean)
+    .map(t => deepCopy(t));
+  return { ...deepCopy(c), assigneeSummaries, templates };
+}
+
+export async function mockGetTemplates(){
+  await delay(100);
+  // include which campaigns each template is assigned to
+  const index = {};
+  Object.entries(CAMPAIGN_TEMPLATES).forEach(([cid, tids])=>{
+    tids.forEach(tid=>{
+      index[tid] = index[tid] || [];
+      index[tid].push(Number(cid));
+    });
+  });
+  return TEMPLATES.map(t => ({ ...deepCopy(t), campaignIds: deepCopy(index[t.id] || []) }));
+}
+
+export async function mockCreateTemplate({ name, html, campaignId }){
+  await delay(120);
+  const id = (TEMPLATES.at(0)?.id || 0) + 1;
+  const item = { id, name: String(name||'Untitled').trim() || 'Untitled', html: String(html||''), createdAt: new Date().toISOString() };
+  TEMPLATES.unshift(item);
+  if (campaignId) {
+    const cid = Number(campaignId);
+    CAMPAIGN_TEMPLATES[cid] = CAMPAIGN_TEMPLATES[cid] || [];
+    if (!CAMPAIGN_TEMPLATES[cid].includes(id)) CAMPAIGN_TEMPLATES[cid].push(id);
+  }
+  return { id };
+}
+
+export async function mockUpdateTemplate(id, { name, html }){
+  await delay(120);
+  const i = TEMPLATES.findIndex(x=>x.id===Number(id));
+  if (i===-1) throw new Error('Template not found');
+  TEMPLATES[i] = { ...TEMPLATES[i], name: String(name||'').trim() || TEMPLATES[i].name, html: String(html||'') };
+  return { ok:true };
+}
+
+export async function mockDeleteTemplate(id){
+  await delay(100);
+  const tid = Number(id);
+  TEMPLATES = TEMPLATES.filter(x=>x.id!==tid);
+  // also unassign from all campaigns
+  Object.keys(CAMPAIGN_TEMPLATES).forEach(cid=>{
+    CAMPAIGN_TEMPLATES[cid] = (CAMPAIGN_TEMPLATES[cid] || []).filter(x=>x!==tid);
+  });
+  return { ok:true };
+}
+
+export async function mockAssignTemplateToCampaign(campaignId, templateId){
+  await delay(100);
+  const cid = Number(campaignId), tid = Number(templateId);
+  if (!CAMPAIGNS.find(c=>c.id===cid)) throw new Error('Campaign not found');
+  if (!TEMPLATES.find(t=>t.id===tid)) throw new Error('Template not found');
+  CAMPAIGN_TEMPLATES[cid] = CAMPAIGN_TEMPLATES[cid] || [];
+  if (!CAMPAIGN_TEMPLATES[cid].includes(tid)) CAMPAIGN_TEMPLATES[cid].push(tid);
+  return { ok:true };
+}
+
+export async function mockUnassignTemplateFromCampaign(campaignId, templateId){
+  await delay(100);
+  const cid = Number(campaignId), tid = Number(templateId);
+  CAMPAIGN_TEMPLATES[cid] = (CAMPAIGN_TEMPLATES[cid] || []).filter(x=>x!==tid);
+  return { ok:true };
 }
 

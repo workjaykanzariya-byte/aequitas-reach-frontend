@@ -8,7 +8,7 @@ import {
   mockAssignCampaignToUser,
   mockCreateCampaign
 } from '../lib/api';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 // Use fixed classes (no dynamic color strings) so Tailwind includes them.
 function RoleBadge({role, name}){
@@ -141,6 +141,7 @@ export default function Campaigns(){
             <tr>
               <th className="text-left px-4 py-2">ID</th>
               <th className="text-left px-4 py-2">Name</th>
+              <th className="text-left px-4 py-2">Templates</th>
               <th className="text-left px-4 py-2">Assigned To</th>
               <th className="text-left px-4 py-2">Status</th>
               <th className="text-left px-4 py-2">Assigned?</th>
@@ -155,7 +156,8 @@ export default function Campaigns(){
               return (
                 <tr key={c.id} className="border-t">
                   <td className="px-4 py-2">{c.id}</td>
-                  <td className="px-4 py-2">{c.name}</td>
+                  <td className="px-4 py-2"><Link to={`/campaigns/${c.id}`} className="hover:underline">{c.name}</Link></td>
+                  <td className="px-4 py-2">{c.templateCount || 0}</td>
                   <td className="px-4 py-2">
                     <div className="flex flex-wrap gap-1">
                       {(c.assigneeSummaries || []).length > 0
