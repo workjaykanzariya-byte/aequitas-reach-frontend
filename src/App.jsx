@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import AdminSettings from './pages/AdminSettings';
 import Campaigns from './pages/Campaigns';
+import Templates from './pages/Templates';
 import Members from './pages/Members';
 import Users from './pages/Users';
 import Forbidden from './pages/Forbidden';
@@ -30,6 +31,7 @@ export default function App(){
           <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard/></Layout></ProtectedRoute>} />
           <Route path="/profile"   element={<ProtectedRoute><Layout><Profile/></Layout></ProtectedRoute>} />
           <Route path="/campaigns" element={<ProtectedRoute><Layout><Campaigns/></Layout></ProtectedRoute>} />
+          <Route path="/templates" element={<ProtectedRoute><Layout><Templates/></Layout></ProtectedRoute>} />
           <Route path="/members"   element={<ProtectedRoute><Layout><Members/></Layout></ProtectedRoute>} />
           <Route path="/users"     element={<ProtectedRoute><Layout><Users/></Layout></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute><Layout><AdminSettings/></Layout></ProtectedRoute>} />

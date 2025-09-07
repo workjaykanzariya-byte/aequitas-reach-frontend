@@ -27,14 +27,44 @@ let CAMPAIGNS = [
 ];
 
 // ----- Templates (mock) -----
-let TEMPLATES = [
-  { id: 1, name: 'Welcome Flow' },
-  { id: 2, name: 'Promo Blast' },
+let TEMPLATES = TEMPLATES || [
+  { id: 1, name: 'Welcome Flow', html: '<p>Hi <strong>there</strong> 👋</p>', createdAt: new Date().toISOString() },
+  { id: 2, name: 'Promo Blast',  html: '<p>Don’t miss our <em>offer</em>!</p>', createdAt: new Date().toISOString() },
 ];
 
 export async function mockGetTemplates() {
-  await delay(120);
+  await delay(100);
+  // Return shallow copies
   return TEMPLATES.map(t => ({ ...t }));
+}
+
+export async function mockGetTemplate(id) {
+  await delay(80);
+  const t = TEMPLATES.find(x => x.id === Number(id));
+  if (!t) throw new Error('Template not found');
+  return { ...t };
+}
+
+export async function mockCreateTemplate({ name, html }) {
+  await delay(120);
+  const id = (TEMPLATES.at(0)?.id || 0) + 1;
+  const item = { id, name: String(name || 'Untitled').trim() || 'Untitled', html: String(html || ''), createdAt: new Date().toISOString() };
+  TEMPLATES.unshift(item);
+  return { id };
+}
+
+export async function mockUpdateTemplate(id, { name, html }) {
+  await delay(120);
+  const idx = TEMPLATES.findIndex(x => x.id === Number(id));
+  if (idx === -1) throw new Error('Template not found');
+  TEMPLATES[idx] = { ...TEMPLATES[idx], name: String(name || '').trim() || TEMPLATES[idx].name, html: String(html || '') };
+  return { ok: true };
+}
+
+export async function mockDeleteTemplate(id) {
+  await delay(100);
+  TEMPLATES = TEMPLATES.filter(x => x.id !== Number(id));
+  return { ok: true };
 }
 
 function delay(ms=250){ return new Promise(r=>setTimeout(r, ms)); }
@@ -74,7 +104,7 @@ export async function mockRegister({ name, email, password }){
   USERS.push({ id, name, email, role:'member', pw: password });
   return { message: 'Registered successfully. Please log in.', role:'member' };
 }
-export async function mockForgotPassword({ email }){
+export async function mockForgotPassword(){
   await delay();
   return { message: 'If the email exists, a reset link has been sent.' };
 }
@@ -114,7 +144,7 @@ export async function mockGetCampaigns(){
   }));
 }
 
-export async function mockCreateCampaign({ name, createdBy }){
+export async function mockCreateCampaign({ name }){
   await delay();
   const id = CAMPAIGNS.reduce((m,c)=>Math.max(m,c.id),100)+1;
   const c = { id, name: String(name||'Untitled').trim() || 'Untitled', status:'draft', assignees:[] };
