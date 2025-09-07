@@ -1,7 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { mockGetCampaigns, mockExecuteCampaign, mockGetPeople, mockAssignCampaignToMember, mockAssignCampaignToUser } from '../lib/api';
+import {
+  mockGetCampaigns,
+  mockExecuteCampaign,
+  mockGetPeople,
+  mockAssignCampaignToMember,
+  mockAssignCampaignToUser,
+  mockCreateCampaign
+} from '../lib/api';
 import { useNavigate } from 'react-router-dom';
+
+function Badge({ children, tone='slate' }){
+  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-${tone}-100 text-${tone}-700`}>{children}</span>;
+}
+// Fallback since Tailwind won't generate dynamic color classes reliably in JIT:
+function RoleBadge({role, name}){
+  const cls = role === 'member'
+    ? 'bg-indigo-100 text-indigo-700'
+    : role === 'user'
+      ? 'bg-emerald-100 text-emerald-700'
+      : 'bg-slate-100 text-slate-700';
+  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${cls}`}>{name}</span>;
+}
 
 function PickerModal({ open, title, items, onSelect, onClose }){
   if (!open) return null;
@@ -10,7 +30,7 @@ function PickerModal({ open, title, items, onSelect, onClose }){
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold">{title}</h3>
-          <button onClick={onClose} className="text-sm px-2 py-1 rounded-lg border">Close</button>
+          <button onClick={onClose} className="btn-outline">Close</button>
         </div>
         <div className="max-h-72 overflow-auto divide-y">
           {items.map(it=>(
@@ -32,20 +52,24 @@ export default function Campaigns(){
   const [list, setList] = useState([]);
   const [tab, setTab] = useState('all'); // 'all' | 'mine'
   const [toast, setToast] = useState('');
-  const [picker, setPicker] = useState({ open:false, forCampaign:null, items:[], mode:null }); // mode: 'member' | 'user'
+  const [picker, setPicker] = useState({ open:false, forCampaign:null, items:[], mode:null }); // 'member' | 'user'
+  const [newName, setNewName] = useState('');
 
-  useEffect(()=>{ (async ()=> setList(await mockGetCampaigns()))(); },[]);
+  const refresh = async ()=> setList(await mockGetCampaigns());
+  useEffect(()=>{ refresh(); },[]);
 
   const visible = useMemo(()=>{
-    if (tab==='mine' && user) return list.filter(c => c.assignees.includes(user.id));
+    if (tab==='mine' && user) return list.filter(c => c.assignees?.includes(user.id));
     return list;
-  }, [tab, list, user]);
+    }, [tab, list, user]);
 
   const execute = async (id)=>{
     setToast('');
     try{
       const res = await mockExecuteCampaign(id, user);
       setList(prev => prev.map(c => c.id===id ? { ...c, status: res.status } : c));
+      // Auto-refresh to pick up "done" after the simulated delay
+      setTimeout(()=>{ refresh(); }, 1200);
       setToast('Execution started');
       setTimeout(()=>setToast(''), 1200);
     }catch(e){
@@ -62,20 +86,17 @@ export default function Campaigns(){
     const users = await mockGetPeople('user');
     setPicker({ open:true, forCampaign:c, items:users, mode:'user' });
   };
-
   const selectFromPicker = async (person)=>{
     if (!picker.forCampaign) return;
     try{
       if (picker.mode==='member') {
-        await mockAssignCampaignToMember(picker.forCampaign.id, person.id, user);
-        setToast('Assigned to member');
+        const r = await mockAssignCampaignToMember(picker.forCampaign.id, person.id, user);
+        setToast(r.message);
       } else if (picker.mode==='user') {
-        await mockAssignCampaignToUser(picker.forCampaign.id, person.id, user);
-        setToast('Assigned to user');
+        const r = await mockAssignCampaignToUser(picker.forCampaign.id, person.id, user);
+        setToast(r.message);
       }
-      // refresh local list
-      const fresh = await mockGetCampaigns();
-      setList(fresh);
+      await refresh(); // pick up status=assigned and new badges
     }catch(e){
       setToast(e.message || 'Assignment failed');
     }finally{
@@ -84,27 +105,45 @@ export default function Campaigns(){
     }
   };
 
+  const create = async (e)=>{
+    e.preventDefault();
+    if (!newName.trim()) return;
+    await mockCreateCampaign({ name: newName.trim(), createdBy: user?.id });
+    setNewName('');
+    await refresh();
+    setToast('Campaign created');
+    setTimeout(()=>setToast(''), 1200);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Campaigns</h1>
         <div className="flex gap-2">
-          <button onClick={()=>setTab('all')}  className={`px-3 py-1.5 rounded-xl border ${tab==='all'?'bg-black text-white':'hover:bg-slate-100'}`}>All</button>
-          <button onClick={()=>setTab('mine')} className={`px-3 py-1.5 rounded-xl border ${tab==='mine'?'bg-black text-white':'hover:bg-slate-100'}`}>Assigned to me</button>
-          {/* Quick access to lists */}
-          {user?.role==='admin' && <button onClick={()=>nav('/members')} className="px-3 py-1.5 rounded-xl border hover:bg-slate-100">All Members</button>}
-          {(user?.role==='admin' || user?.role==='member') && <button onClick={()=>nav('/users')} className="px-3 py-1.5 rounded-xl border hover:bg-slate-100">All Users</button>}
+          <button onClick={()=>setTab('all')}  className={`btn-outline ${tab==='all'?'bg-black text-white':''}`}>All</button>
+          <button onClick={()=>setTab('mine')} className={`btn-outline ${tab==='mine'?'bg-black text-white':''}`}>Assigned to me</button>
+          {user?.role==='admin' && <button onClick={()=>nav('/members')} className="btn-outline">All Members</button>}
+          {(user?.role==='admin' || user?.role==='member') && <button onClick={()=>nav('/users')} className="btn-outline">All Users</button>}
         </div>
       </div>
 
       {toast && <div className="text-sm text-slate-700 bg-white border rounded-xl px-3 py-2">{toast}</div>}
+
+      {/* Create new campaign */}
+      <form onSubmit={create} className="flex flex-wrap items-end gap-2 bg-white border rounded-2xl p-3">
+        <div>
+          <label className="block text-sm mb-1">New campaign name</label>
+          <input className="border rounded px-3 py-2 w-64" value={newName} onChange={e=>setNewName(e.target.value)} placeholder="e.g., September Push" />
+        </div>
+        <button className="btn">Create Campaign</button>
+      </form>
 
       <div className="bg-white rounded-2xl border overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-slate-600">
             <tr>
               <th className="text-left px-4 py-2">ID</th>
-              <th className="text-left px-4 py-2">Name</th>
+              <th className="text-left px-4 py-2">Name & Assignees</th>
               <th className="text-left px-4 py-2">Status</th>
               <th className="text-left px-4 py-2">Assigned?</th>
               <th className="text-left px-4 py-2">Actions</th>
@@ -112,18 +151,27 @@ export default function Campaigns(){
           </thead>
           <tbody>
             {visible.map(c=>{
-              const assignedToMe = user ? c.assignees.includes(user.id) : false;
+              const assignedToMe = user ? c.assignees?.includes(user.id) : false;
               const canExecute = (user?.role==='admin') || (user?.role==='member' && assignedToMe) || (user?.role==='user' && assignedToMe);
               return (
                 <tr key={c.id} className="border-t">
                   <td className="px-4 py-2">{c.id}</td>
-                  <td className="px-4 py-2">{c.name}</td>
+                  <td className="px-4 py-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <span>{c.name}</span>
+                      <div className="flex flex-wrap gap-1">
+                        {(c.assigneeSummaries || []).map(s => (
+                          <RoleBadge key={s.id} role={s.role} name={s.name} />
+                        ))}
+                      </div>
+                    </div>
+                  </td>
                   <td className="px-4 py-2">{c.status}</td>
                   <td className="px-4 py-2">{assignedToMe ? 'Yes' : 'No'}</td>
                   <td className="px-4 py-2 flex flex-wrap gap-2">
-                    <button onClick={()=>execute(c.id)} disabled={!canExecute} className={`px-3 py-1.5 rounded-xl ${canExecute?'bg-indigo-600 text-white hover:bg-indigo-500':'bg-slate-200 text-slate-500 cursor-not-allowed'}`}>Execute</button>
-                    {user?.role==='admin'  && <button onClick={()=>openAssignToMember(c)} className="px-3 py-1.5 rounded-xl border hover:bg-slate-100">Assign Member</button>}
-                    {user?.role==='member' && <button onClick={()=>openAssignToUser(c)}   className="px-3 py-1.5 rounded-xl border hover:bg-slate-100">Assign User</button>}
+                    <button onClick={()=>execute(c.id)} disabled={!canExecute} className={`btn ${!canExecute?'opacity-60 cursor-not-allowed':''}`}>Execute</button>
+                    {user?.role==='admin'  && <button onClick={()=>openAssignToMember(c)} className="btn-outline">Assign Member</button>}
+                    {user?.role==='member' && <button onClick={()=>openAssignToUser(c)}   className="btn-outline">Assign User</button>}
                   </td>
                 </tr>
               );
