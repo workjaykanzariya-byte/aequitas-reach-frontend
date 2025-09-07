@@ -10,10 +10,7 @@ import {
 } from '../lib/api';
 import { useNavigate } from 'react-router-dom';
 
-function Badge({ children, tone='slate' }){
-  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs bg-${tone}-100 text-${tone}-700`}>{children}</span>;
-}
-// Fallback since Tailwind won't generate dynamic color classes reliably in JIT:
+// Use fixed classes (no dynamic color strings) so Tailwind includes them.
 function RoleBadge({role, name}){
   const cls = role === 'member'
     ? 'bg-indigo-100 text-indigo-700'
@@ -59,9 +56,9 @@ export default function Campaigns(){
   useEffect(()=>{ refresh(); },[]);
 
   const visible = useMemo(()=>{
-    if (tab==='mine' && user) return list.filter(c => c.assignees?.includes(user.id));
+    if (tab==='mine' && user) return list.filter(c => (c.assignees || []).includes(user.id));
     return list;
-    }, [tab, list, user]);
+  }, [tab, list, user]);
 
   const execute = async (id)=>{
     setToast('');
@@ -96,7 +93,7 @@ export default function Campaigns(){
         const r = await mockAssignCampaignToUser(picker.forCampaign.id, person.id, user);
         setToast(r.message);
       }
-      await refresh(); // pick up status=assigned and new badges
+      await refresh(); // now "Assigned?" should flip to Yes and names appear
     }catch(e){
       setToast(e.message || 'Assignment failed');
     }finally{
@@ -143,7 +140,8 @@ export default function Campaigns(){
           <thead className="bg-slate-50 text-slate-600">
             <tr>
               <th className="text-left px-4 py-2">ID</th>
-              <th className="text-left px-4 py-2">Name & Assignees</th>
+              <th className="text-left px-4 py-2">Name</th>
+              <th className="text-left px-4 py-2">Assigned To</th>
               <th className="text-left px-4 py-2">Status</th>
               <th className="text-left px-4 py-2">Assigned?</th>
               <th className="text-left px-4 py-2">Actions</th>
@@ -151,23 +149,23 @@ export default function Campaigns(){
           </thead>
           <tbody>
             {visible.map(c=>{
-              const assignedToMe = user ? c.assignees?.includes(user.id) : false;
+              const assignedToMe = user ? (c.assignees || []).includes(user.id) : false;
+              const assignedAny = (c.assignees && c.assignees.length > 0) || (c.assigneeSummaries && c.assigneeSummaries.length > 0);
               const canExecute = (user?.role==='admin') || (user?.role==='member' && assignedToMe) || (user?.role==='user' && assignedToMe);
               return (
                 <tr key={c.id} className="border-t">
                   <td className="px-4 py-2">{c.id}</td>
+                  <td className="px-4 py-2">{c.name}</td>
                   <td className="px-4 py-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <span>{c.name}</span>
-                      <div className="flex flex-wrap gap-1">
-                        {(c.assigneeSummaries || []).map(s => (
-                          <RoleBadge key={s.id} role={s.role} name={s.name} />
-                        ))}
-                      </div>
+                    <div className="flex flex-wrap gap-1">
+                      {(c.assigneeSummaries || []).length > 0
+                        ? c.assigneeSummaries.map(s => <RoleBadge key={s.id} role={s.role} name={s.name} />)
+                        : <span className="text-slate-400">—</span>
+                      }
                     </div>
                   </td>
                   <td className="px-4 py-2">{c.status}</td>
-                  <td className="px-4 py-2">{assignedToMe ? 'Yes' : 'No'}</td>
+                  <td className="px-4 py-2">{assignedAny ? 'Yes' : 'No'}</td>
                   <td className="px-4 py-2 flex flex-wrap gap-2">
                     <button onClick={()=>execute(c.id)} disabled={!canExecute} className={`btn ${!canExecute?'opacity-60 cursor-not-allowed':''}`}>Execute</button>
                     {user?.role==='admin'  && <button onClick={()=>openAssignToMember(c)} className="btn-outline">Assign Member</button>}
@@ -176,7 +174,7 @@ export default function Campaigns(){
                 </tr>
               );
             })}
-            {visible.length===0 && <tr><td colSpan="5" className="px-4 py-6 text-center text-slate-500">No campaigns</td></tr>}
+            {visible.length===0 && <tr><td colSpan="6" className="px-4 py-6 text-center text-slate-500">No campaigns</td></tr>}
           </tbody>
         </table>
       </div>
