@@ -29,6 +29,7 @@ export default function Layout({ children }) {
                 <NavLink to="/users" className={({isActive})=>`block px-3 py-2 rounded-xl ${isActive?'bg-black text-white':'hover:bg-slate-100'}`}>Users</NavLink>
               )}
               <NavLink to="/campaigns" className={({isActive})=>`block px-3 py-2 rounded-xl ${isActive?'bg-black text-white':'hover:bg-slate-100'}`}>Campaigns</NavLink>
+              <NavLink to="/templates" className={({isActive}) => `block px-3 py-2 rounded-xl ${isActive ? 'bg-black text-white' : 'hover:bg-slate-100'}`}>Templates</NavLink>
               {user?.role === 'admin' && (
                 <NavLink to="/admin/settings" className={({isActive})=>`block px-3 py-2 rounded-xl ${isActive?'bg-black text-white':'hover:bg-slate-100'}`}>Admin Settings</NavLink>
               )}

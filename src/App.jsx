@@ -6,42 +6,51 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
-import Health from './pages/Health';
 
 import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile';
-import AdminSettings from './pages/AdminSettings';
-import Campaigns from './pages/Campaigns';
+import MyProfile from './pages/MyProfile';
 import Members from './pages/Members';
 import Users from './pages/Users';
-import Forbidden from './pages/Forbidden';
+import Campaigns from './pages/Campaigns';
+import AdminSettings from './pages/AdminSettings';
+import Templates from './pages/Templates';
+import CampaignDetail from './pages/CampaignDetail';
 
-export default function App(){
+function App(){
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
           {/* Public */}
-          <Route path="/login" element={<Login/>} />
-          <Route path="/register" element={<Register/>} />
-          <Route path="/forgot" element={<ForgotPassword/>} />
-          <Route path="/403" element={<Forbidden/>} />
-          <Route path="/health" element={<Health />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot" element={<ForgotPassword />} />
 
           {/* Protected */}
-          <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard/></Layout></ProtectedRoute>} />
-          <Route path="/profile"   element={<ProtectedRoute><Layout><Profile/></Layout></ProtectedRoute>} />
-          <Route path="/campaigns" element={<ProtectedRoute><Layout><Campaigns/></Layout></ProtectedRoute>} />
-          <Route path="/members"   element={<ProtectedRoute><Layout><Members/></Layout></ProtectedRoute>} />
-          <Route path="/users"     element={<ProtectedRoute><Layout><Users/></Layout></ProtectedRoute>} />
-          <Route path="/admin/settings" element={<ProtectedRoute><Layout><AdminSettings/></Layout></ProtectedRoute>} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="profile" element={<MyProfile />} />
+            <Route path="members" element={<Members />} />
+            <Route path="users" element={<Users />} />
+            <Route path="campaigns" element={<Campaigns />} />
+            <Route path="campaigns/:id" element={<CampaignDetail />} />
+            <Route path="templates" element={<Templates />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
 
-          {/* Default */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
   );
 }
-
+export default App;

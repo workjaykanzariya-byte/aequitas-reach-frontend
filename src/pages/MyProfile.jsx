@@ -1,6 +1,6 @@
 // Added cyan text class to verify Tailwind output
 import { useAuth } from '../context/AuthContext';
-export default function Profile(){
+export default function MyProfile(){
   const { user } = useAuth();
   return (
     <div className="p-4 bg-white rounded-2xl border">

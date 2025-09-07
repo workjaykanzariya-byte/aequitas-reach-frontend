@@ -8,17 +8,7 @@ import {
   mockAssignCampaignToUser,
   mockCreateCampaign
 } from '../lib/api';
-import { useNavigate } from 'react-router-dom';
-
-// Use fixed classes (no dynamic color strings) so Tailwind includes them.
-function RoleBadge({role, name}){
-  const cls = role === 'member'
-    ? 'bg-indigo-100 text-indigo-700'
-    : role === 'user'
-      ? 'bg-emerald-100 text-emerald-700'
-      : 'bg-slate-100 text-slate-700';
-  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${cls}`}>{name}</span>;
-}
+import { Link, useNavigate } from 'react-router-dom';
 
 function PickerModal({ open, title, items, onSelect, onClose }){
   if (!open) return null;
@@ -141,7 +131,7 @@ export default function Campaigns(){
             <tr>
               <th className="text-left px-4 py-2">ID</th>
               <th className="text-left px-4 py-2">Name</th>
-              <th className="text-left px-4 py-2">Assigned To</th>
+              <th className="text-left px-4 py-2">Templates</th>
               <th className="text-left px-4 py-2">Status</th>
               <th className="text-left px-4 py-2">Assigned?</th>
               <th className="text-left px-4 py-2">Actions</th>
@@ -155,15 +145,8 @@ export default function Campaigns(){
               return (
                 <tr key={c.id} className="border-t">
                   <td className="px-4 py-2">{c.id}</td>
-                  <td className="px-4 py-2">{c.name}</td>
-                  <td className="px-4 py-2">
-                    <div className="flex flex-wrap gap-1">
-                      {(c.assigneeSummaries || []).length > 0
-                        ? c.assigneeSummaries.map(s => <RoleBadge key={s.id} role={s.role} name={s.name} />)
-                        : <span className="text-slate-400">—</span>
-                      }
-                    </div>
-                  </td>
+                  <td className="px-4 py-2"><Link to={`/campaigns/${c.id}`} className="hover:underline">{c.name}</Link></td>
+                  <td className="px-4 py-2">{c.templateCount || 0}</td>
                   <td className="px-4 py-2">{c.status}</td>
                   <td className="px-4 py-2">{assignedAny ? 'Yes' : 'No'}</td>
                   <td className="px-4 py-2 flex flex-wrap gap-2">
