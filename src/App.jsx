@@ -6,6 +6,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
+import Health from './pages/Health';
 
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
@@ -25,6 +26,7 @@ export default function App(){
           <Route path="/register" element={<Register/>} />
           <Route path="/forgot" element={<ForgotPassword/>} />
           <Route path="/403" element={<Forbidden/>} />
+          <Route path="/health" element={<Health />} />
 
           {/* Protected */}
           <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard/></Layout></ProtectedRoute>} />
