@@ -26,6 +26,17 @@ let CAMPAIGNS = [
   { id: 103, name: 'VIP Outreach',   status: 'draft',  assignees: [2,3] },// user + member
 ];
 
+// ----- Templates (mock) -----
+let TEMPLATES = [
+  { id: 1, name: 'Welcome Flow' },
+  { id: 2, name: 'Promo Blast' },
+];
+
+export async function mockGetTemplates() {
+  await delay(120);
+  return TEMPLATES.map(t => ({ ...t }));
+}
+
 function delay(ms=250){ return new Promise(r=>setTimeout(r, ms)); }
 function userById(id){ return USERS.find(u => u.id === id) || null; }
 
