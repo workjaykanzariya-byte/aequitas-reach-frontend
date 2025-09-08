@@ -74,7 +74,7 @@ export async function mockRegister({ name, email, password }){
   USERS.push({ id, name, email, role:'member', pw: password });
   return { message: 'Registered successfully. Please log in.', role:'member' };
 }
-export async function mockForgotPassword({ email }){
+export async function mockForgotPassword(){
   await delay();
   return { message: 'If the email exists, a reset link has been sent.' };
 }
@@ -114,7 +114,7 @@ export async function mockGetCampaigns(){
   }));
 }
 
-export async function mockCreateCampaign({ name, createdBy }){
+export async function mockCreateCampaign({ name }){
   await delay();
   const id = CAMPAIGNS.reduce((m,c)=>Math.max(m,c.id),100)+1;
   const c = { id, name: String(name||'Untitled').trim() || 'Untitled', status:'draft', assignees:[] };
