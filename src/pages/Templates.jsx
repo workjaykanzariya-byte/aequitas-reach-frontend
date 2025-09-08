@@ -5,13 +5,16 @@ import { listTemplates, deleteTemplate } from '../lib/templates';
 export default function Templates(){
   const [list, setList] = useState([]);
 
-  const refresh = async () => setList(await listTemplates());
+  const refresh = async () => {
+    const res = await listTemplates();
+    if (res.ok) setList(res.data);
+  };
   useEffect(() => { refresh(); }, []);
 
   const remove = async id => {
     if (!window.confirm('Delete this template?')) return;
-    await deleteTemplate(id);
-    refresh();
+    const res = await deleteTemplate(id);
+    if (res.ok) refresh();
   };
 
   return (
