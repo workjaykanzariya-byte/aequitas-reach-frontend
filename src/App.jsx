@@ -17,6 +17,7 @@ import Users from './pages/Users';
 import Forbidden from './pages/Forbidden';
 import Templates from './pages/Templates';
 import TemplateForm from './pages/TemplateForm';
+import TemplateDetails from './pages/templates/TemplateDetails';
 
 export default function App(){
   return (
@@ -36,7 +37,8 @@ export default function App(){
           <Route path="/campaigns" element={<ProtectedRoute><Layout><Campaigns/></Layout></ProtectedRoute>} />
           <Route path="/templates" element={<ProtectedRoute><Layout><Templates/></Layout></ProtectedRoute>} />
           <Route path="/templates/new" element={<ProtectedRoute><Layout><TemplateForm/></Layout></ProtectedRoute>} />
-          <Route path="/templates/:id" element={<ProtectedRoute><Layout><TemplateForm/></Layout></ProtectedRoute>} />
+          <Route path="/templates/:id/edit" element={<ProtectedRoute><Layout><TemplateForm/></Layout></ProtectedRoute>} />
+          <Route path="/templates/:id" element={<ProtectedRoute><Layout><TemplateDetails/></Layout></ProtectedRoute>} />
           <Route path="/members"   element={<ProtectedRoute><Layout><Members/></Layout></ProtectedRoute>} />
           <Route path="/users"     element={<ProtectedRoute><Layout><Users/></Layout></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute><Layout><AdminSettings/></Layout></ProtectedRoute>} />

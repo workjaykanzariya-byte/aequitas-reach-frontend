@@ -19,18 +19,29 @@ let SETTINGS = {
 // Contacts demo (if your app has it; harmless if unused)
 let CONTACTS = [];
 
-// Campaigns: assignees = array of USER IDs (can be members or users)
-let CAMPAIGNS = [
-  { id: 101, name: 'Launch Alpha',   status: 'draft',  assignees: [3] },  // member assigned
-  { id: 102, name: 'Festive Promo',  status: 'draft',  assignees: [] },
-  { id: 103, name: 'VIP Outreach',   status: 'draft',  assignees: [2,3] },// user + member
-];
+// Keep in-memory mock data on the global object so it survives HMR
+const g = typeof window !== 'undefined' ? window : globalThis;
 
 // ----- Templates (mock) -----
-let TEMPLATES = [
-  { id: 1, name: 'Welcome Flow' },
-  { id: 2, name: 'Promo Blast' },
+// template: { id, name, html, createdAt?, updatedAt? }
+g.TEMPLATES = g.TEMPLATES || [
+  {
+    id: 1,
+    name: 'Test Template',
+    html: '<p>Hello <strong>world</strong></p>',
+    createdAt: '2025-09-01T10:00:00Z',
+    updatedAt: '2025-09-05T11:00:00Z',
+  },
 ];
+let TEMPLATES = g.TEMPLATES;
+
+// Campaign has { id, name, description?, templateIds?, status?, assignees? }
+g.CAMPAIGNS = g.CAMPAIGNS || [
+  { id: 101, name: 'Launch Alpha',   status: 'draft', assignees: [3], description: 'Sept push',       templateIds: [1] },
+  { id: 102, name: 'Festive Promo',  status: 'draft', assignees: [],   description: 'Dormant users',  templateIds: [] },
+  { id: 103, name: 'VIP Outreach',   status: 'draft', assignees: [2,3], description: 'VIP outreach',  templateIds: [] },
+];
+let CAMPAIGNS = g.CAMPAIGNS;
 
 export async function mockGetTemplates() {
   await delay(120);
@@ -159,5 +170,42 @@ export async function mockAssignCampaignToUser(campaignId, userId, currentUser){
   if (!c.assignees.includes(user.id)) c.assignees.push(user.id);
   c.status = 'assigned';
   return { message:'Assigned to user', campaignId, userId, status:c.status };
+}
+
+// ----- Template ↔ Campaign helpers -----
+export function getTemplateById(id) {
+  id = Number(id);
+  return (TEMPLATES || []).find(t => Number(t.id) === id) || null;
+}
+
+export function getCampaigns() {
+  return CAMPAIGNS || [];
+}
+
+export function getCampaignById(id) {
+  id = Number(id);
+  return (CAMPAIGNS || []).find(c => Number(c.id) === id) || null;
+}
+
+export function getCampaignsByTemplateId(templateId) {
+  const id = Number(templateId);
+  return getCampaigns().filter(c => Array.isArray(c.templateIds) && c.templateIds.includes(id));
+}
+
+export function assignTemplateToCampaign(templateId, campaignId) {
+  const c = getCampaignById(campaignId);
+  if (!c) throw new Error('Campaign not found');
+  const id = Number(templateId);
+  if (!Array.isArray(c.templateIds)) c.templateIds = [];
+  if (!c.templateIds.includes(id)) c.templateIds.push(id);
+  return c;
+}
+
+export function unassignTemplateFromCampaign(templateId, campaignId) {
+  const c = getCampaignById(campaignId);
+  if (!c || !Array.isArray(c.templateIds)) return c;
+  const id = Number(templateId);
+  c.templateIds = c.templateIds.filter(tid => Number(tid) !== id);
+  return c;
 }
 

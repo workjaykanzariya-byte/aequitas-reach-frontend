@@ -1,21 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listTemplates, deleteTemplate } from '../lib/templates';
+import { mockGetTemplates } from '../lib/api';
 
 export default function Templates(){
   const [list, setList] = useState([]);
 
   const refresh = async () => {
-    const res = await listTemplates();
-    if (res.ok) setList(res.data);
+    const res = await mockGetTemplates();
+    setList(res);
   };
   useEffect(() => { refresh(); }, []);
-
-  const remove = async id => {
-    if (!window.confirm('Delete this template?')) return;
-    const res = await deleteTemplate(id);
-    if (res.ok) refresh();
-  };
 
   return (
     <div className="space-y-4">
@@ -29,23 +23,22 @@ export default function Templates(){
             <tr>
               <th className="text-left px-4 py-2">ID</th>
               <th className="text-left px-4 py-2">Name</th>
-              <th className="text-left px-4 py-2">Actions</th>
             </tr>
           </thead>
           <tbody>
             {list.map(t => (
               <tr key={t.id} className="border-t">
                 <td className="px-4 py-2">{t.id}</td>
-                <td className="px-4 py-2">{t.name}</td>
-                <td className="px-4 py-2 flex gap-2">
-                  <Link to={`/templates/${t.id}`} className="btn-outline">Edit</Link>
-                  <button onClick={() => remove(t.id)} className="btn-outline">Delete</button>
+                <td className="px-4 py-2">
+                  <Link to={`/templates/${t.id}`} className="text-indigo-600 hover:underline">
+                    {t.name}
+                  </Link>
                 </td>
               </tr>
             ))}
             {list.length === 0 && (
               <tr>
-                <td colSpan="3" className="px-4 py-6 text-center text-slate-500">No templates</td>
+                <td colSpan="2" className="px-4 py-6 text-center text-slate-500">No templates</td>
               </tr>
             )}
           </tbody>
