@@ -5,6 +5,7 @@ import {
   mockGetTemplates,
   assignTemplateToCampaign,
   unassignTemplateFromCampaign,
+  getTemplatesByCampaignId,
 } from '../../lib/api';
 
 export default function CampaignDetails() {
@@ -25,11 +26,7 @@ export default function CampaignDetails() {
     refresh();
   }, [refresh]);
 
-  const assignedTemplates = useMemo(() => {
-    if (!campaign) return [];
-    const ids = new Set(campaign.templateIds || []);
-    return templates.filter((t) => ids.has(t.id));
-  }, [campaign, templates]);
+  const assignedTemplates = useMemo(() => getTemplatesByCampaignId(id), [id, campaign, templates]);
 
   const availableTemplates = useMemo(() => {
     const assignedIds = new Set(assignedTemplates.map((t) => t.id));
@@ -122,8 +119,11 @@ export default function CampaignDetails() {
                 <tr key={t.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3">{t.id}</td>
                   <td className="px-4 py-3">
-                    <Link to={`/templates/${t.id}`} className="text-indigo-600 hover:underline">
-                      {t.name}
+                    <Link
+                      to={`/templates/${t.id}`}
+                      className="text-indigo-600 hover:underline"
+                    >
+                      {t.name || 'Untitled Template'}
                     </Link>
                   </td>
                   <td className="px-4 py-3">
@@ -152,7 +152,7 @@ export default function CampaignDetails() {
             <option value="">Select template…</option>
             {availableTemplates.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.name}
+                {t.name || 'Untitled Template'}
               </option>
             ))}
           </select>

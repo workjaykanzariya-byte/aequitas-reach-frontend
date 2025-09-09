@@ -125,8 +125,11 @@ export default function TemplateDetails() {
                 <tr key={c.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-3">{c.id}</td>
                   <td className="px-4 py-3">
-                    <Link to={`/campaigns/${c.id}`} className="text-indigo-600 hover:underline">
-                      {c.name}
+                    <Link
+                      to={`/campaigns/${c.id}`}
+                      className="text-indigo-600 hover:underline"
+                    >
+                      {c.name || 'Unnamed Campaign'}
                     </Link>
                   </td>
                   <td className="px-4 py-3">
@@ -155,7 +158,7 @@ export default function TemplateDetails() {
             <option value="">Select campaign…</option>
             {availableToAssign.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {c.name || 'Unnamed Campaign'}
               </option>
             ))}
           </select>
