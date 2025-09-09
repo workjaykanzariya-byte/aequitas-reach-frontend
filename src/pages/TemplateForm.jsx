@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { createTemplate, updateTemplate, getTemplate } from '../lib/templates';
+import { createTemplate, updateTemplate, getTemplateById } from '../lib/api';
 import RichTextEditor from '../components/RichTextEditor';
 
 export default function TemplateForm(){
@@ -10,30 +10,24 @@ export default function TemplateForm(){
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
-  useEffect(() => {
-    if (isEdit) {
-        getTemplate(id).then(res => {
-          if (res.ok && res.data) {
-            setName(res.data.name);
-            setDescription(res.data.description || '');
-          }
-        });
-    }
-  }, [id, isEdit]);
+    useEffect(() => {
+      if (isEdit) {
+        const t = getTemplateById(id);
+        if (t) {
+          setName(t.name);
+          setDescription(t.html || '');
+        }
+      }
+    }, [id, isEdit]);
 
   const save = async e => {
     e.preventDefault();
-      let res;
-      if (isEdit) {
-        res = await updateTemplate(id, { name, description });
-      } else {
-        res = await createTemplate({ name, description });
-      }
-      if (res.ok) {
+        if (isEdit) {
+          updateTemplate(id, { name, html: description });
+        } else {
+          createTemplate({ name, html: description });
+        }
         nav('/templates');
-      } else {
-        window.alert('Failed to save template');
-      }
   };
 
   return (

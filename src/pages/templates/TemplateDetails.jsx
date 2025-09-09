@@ -1,12 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import {
-  getTemplateById,
-  getCampaigns,
-  getCampaignsByTemplateId,
-  assignTemplateToCampaign,
-  unassignTemplateFromCampaign
+  getTemplateById, getCampaigns, getCampaignsByTemplateId,
+  assignTemplateToCampaign, unassignTemplateFromCampaign
 } from '../../lib/api';
 
 export default function TemplateDetails() {
@@ -18,13 +15,17 @@ export default function TemplateDetails() {
   const [assignTo, setAssignTo] = useState('');
 
   const refresh = useCallback(() => {
-    const t = getTemplateById(id);
-    setTemplate(t);
+    setTemplate(getTemplateById(id));
     setAllCampaigns(getCampaigns());
     setAssigned(getCampaignsByTemplateId(id));
   }, [id]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    refresh();
+    const onChange = () => refresh();
+    window.addEventListener('data-change', onChange);
+    return () => window.removeEventListener('data-change', onChange);
+  }, [refresh]);
 
   const availableToAssign = useMemo(() => {
     const assignedIds = new Set(assigned.map(c => c.id));
@@ -40,33 +41,22 @@ export default function TemplateDetails() {
     );
   }
 
-  const handleAssign = () => {
-    if (!assignTo) return alert('Please select a campaign');
-    try {
-      assignTemplateToCampaign(Number(id), Number(assignTo));
-      alert('Assigned successfully');
-      setAssignTo('');
-      refresh();
-    } catch (e) {
-      alert(e.message || 'Failed to assign');
-    }
+  const doAssign = () => {
+    if (!assignTo) return alert('Select a campaign');
+    assignTemplateToCampaign(Number(id), Number(assignTo));
+    setAssignTo('');
+    refresh();
   };
-
-  const handleUnassign = (campaignId) => {
-    try {
-      unassignTemplateFromCampaign(Number(id), Number(campaignId));
-      alert('Unassigned successfully');
-      refresh();
-    } catch (e) {
-      alert(e.message || 'Failed to unassign');
-    }
+  const doUnassign = (campaignId) => {
+    unassignTemplateFromCampaign(Number(id), Number(campaignId));
+    refresh();
   };
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Template: {template.name} <span className="text-gray-400">(# {template.id})</span></h1>
-        <Link to="/templates" className="px-3 py-2 rounded bg-gray-200">Back to Templates</Link>
+        <h1 className="text-2xl font-semibold">Template: {template.name} <span className="text-gray-400">#{template.id}</span></h1>
+        <Link to="/templates" className="px-3 py-2 rounded bg-gray-200">Back</Link>
       </div>
 
       <section className="rounded-xl border p-4 bg-white space-y-2">
@@ -81,10 +71,7 @@ export default function TemplateDetails() {
 
       <section className="rounded-xl border p-4 bg-white space-y-2">
         <h2 className="font-medium">Content Preview</h2>
-        <div
-          className="prose max-w-none"
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(template.html || '') }}
-        />
+        <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(template.html || '') }} />
       </section>
 
       <section className="rounded-xl border p-4 bg-white space-y-4">
@@ -93,20 +80,14 @@ export default function TemplateDetails() {
           <p className="text-sm text-gray-500">No campaigns assigned yet.</p>
         ) : (
           <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-gray-500">
-                <th className="py-2">ID</th>
-                <th className="py-2">Name</th>
-                <th className="py-2">Actions</th>
-              </tr>
-            </thead>
+            <thead><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead>
             <tbody>
               {assigned.map(c => (
                 <tr key={c.id} className="border-t">
                   <td className="py-2">{c.id}</td>
-                  <td className="py-2">{c.name}</td>
+                  <td className="py-2"><Link to={`/campaigns/${c.id}`} className="text-indigo-600 hover:underline">{c.name}</Link></td>
                   <td className="py-2">
-                    <button onClick={() => handleUnassign(c.id)} className="px-3 py-1 rounded bg-red-500 text-white">Unassign</button>
+                    <button onClick={() => doUnassign(c.id)} className="px-3 py-1 rounded bg-red-500 text-white">Unassign</button>
                   </td>
                 </tr>
               ))}
@@ -120,13 +101,12 @@ export default function TemplateDetails() {
         <div className="flex gap-3 items-center">
           <select value={assignTo} onChange={e => setAssignTo(e.target.value)} className="border rounded px-3 py-2">
             <option value="">Select campaign…</option>
-            {availableToAssign.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
+            {availableToAssign.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          <button onClick={handleAssign} className="px-3 py-2 rounded bg-indigo-600 text-white">Assign</button>
+          <button onClick={doAssign} className="px-3 py-2 rounded bg-indigo-600 text-white">Assign</button>
         </div>
       </section>
     </div>
   );
 }
+

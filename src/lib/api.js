@@ -19,33 +19,34 @@ let SETTINGS = {
 // Contacts demo (if your app has it; harmless if unused)
 let CONTACTS = [];
 
-// Keep in-memory mock data on the global object so it survives HMR
-const g = typeof window !== 'undefined' ? window : globalThis;
+// ----- Seed mock data once and keep on window so it survives navigation -----
+if (typeof window !== 'undefined') {
+  window.TEMPLATES = Array.isArray(window.TEMPLATES) ? window.TEMPLATES : [
+    {
+      id: 1,
+      name: 'Test Template',
+      html: '<p>Hello <strong>world</strong></p>',
+      createdAt: '2025-09-01T10:00:00Z',
+      updatedAt: '2025-09-05T11:00:00Z',
+    },
+  ];
+  window.CAMPAIGNS = Array.isArray(window.CAMPAIGNS) ? window.CAMPAIGNS : [
+    { id: 101, name: 'Launch Alpha',   status: 'draft', templateIds: [1], assignedToUserIds: [1,2] },
+    { id: 102, name: 'Festive Promo',  status: 'draft', templateIds: [],  assignedToUserIds: [] },
+    { id: 103, name: 'VIP Outreach',   status: 'draft', templateIds: [1], assignedToUserIds: [1] },
+  ];
+}
 
-// ----- Templates (mock) -----
-// template: { id, name, html, createdAt?, updatedAt? }
-g.TEMPLATES = g.TEMPLATES || [
-  {
-    id: 1,
-    name: 'Test Template',
-    html: '<p>Hello <strong>world</strong></p>',
-    createdAt: '2025-09-01T10:00:00Z',
-    updatedAt: '2025-09-05T11:00:00Z',
-  },
-];
-let TEMPLATES = g.TEMPLATES;
-
-// Campaign has { id, name, description?, templateIds?, status?, assignees? }
-g.CAMPAIGNS = g.CAMPAIGNS || [
-  { id: 101, name: 'Launch Alpha',   status: 'draft', assignees: [3], description: 'Sept push',       templateIds: [1] },
-  { id: 102, name: 'Festive Promo',  status: 'draft', assignees: [],   description: 'Dormant users',  templateIds: [] },
-  { id: 103, name: 'VIP Outreach',   status: 'draft', assignees: [2,3], description: 'VIP outreach',  templateIds: [] },
-];
-let CAMPAIGNS = g.CAMPAIGNS;
+// Tiny event so UI can choose to refresh if listening
+function pingChange(topic = 'data-change') {
+  if (typeof window !== 'undefined' && window.dispatchEvent) {
+    window.dispatchEvent(new CustomEvent(topic));
+  }
+}
 
 export async function mockGetTemplates() {
   await delay(120);
-  return TEMPLATES.map(t => ({ ...t }));
+  return (window.TEMPLATES || []).map(t => ({ ...t }));
 }
 
 function delay(ms=250){ return new Promise(r=>setTimeout(r, ms)); }
@@ -116,7 +117,7 @@ export async function mockBulkAddContacts(items){ await delay(180); let added=0;
  */
 export async function mockGetCampaigns(){
   await delay();
-  return CAMPAIGNS.map(c => ({
+  return (window.CAMPAIGNS || []).map(c => ({
     ...c,
     assigneeSummaries: c.assignees
       .map(id => userById(id))
@@ -127,9 +128,10 @@ export async function mockGetCampaigns(){
 
 export async function mockCreateCampaign({ name }){
   await delay();
-  const id = CAMPAIGNS.reduce((m,c)=>Math.max(m,c.id),100)+1;
+  const id = (window.CAMPAIGNS.reduce((m,c)=>Math.max(m,c.id),100)+1);
   const c = { id, name: String(name||'Untitled').trim() || 'Untitled', status:'draft', assignees:[] };
-  CAMPAIGNS.unshift(c);
+  window.CAMPAIGNS.unshift(c);
+  pingChange();
   return { id: c.id, status: c.status };
 }
 
@@ -139,7 +141,7 @@ export async function mockCreateCampaign({ name }){
 // - User:   execute assigned
 export async function mockExecuteCampaign(campaignId, currentUser){
   await delay();
-  const c = CAMPAIGNS.find(x => x.id===campaignId);
+  const c = window.CAMPAIGNS.find(x => x.id===campaignId);
   if (!c) throw new Error('Campaign not found');
   const canAdmin  = currentUser?.role === 'admin';
   const canMember = currentUser?.role === 'member' && c.assignees.includes(currentUser.id);
@@ -155,7 +157,7 @@ export async function mockExecuteCampaign(campaignId, currentUser){
 export async function mockAssignCampaignToMember(campaignId, memberId, currentUser){
   await delay();
   if (currentUser?.role !== 'admin') throw new Error('Only Admin can assign to a Member');
-  const c = CAMPAIGNS.find(x => x.id===campaignId); if (!c) throw new Error('Campaign not found');
+  const c = window.CAMPAIGNS.find(x => x.id===campaignId); if (!c) throw new Error('Campaign not found');
   const member = USERS.find(u => u.id===memberId && u.role==='member'); if (!member) throw new Error('Member not found');
   if (!c.assignees.includes(member.id)) c.assignees.push(member.id);
   c.status = 'assigned';
@@ -165,7 +167,7 @@ export async function mockAssignCampaignToMember(campaignId, memberId, currentUs
 export async function mockAssignCampaignToUser(campaignId, userId, currentUser){
   await delay();
   if (currentUser?.role !== 'member') throw new Error('Only Member can assign to a User');
-  const c = CAMPAIGNS.find(x => x.id===campaignId); if (!c) throw new Error('Campaign not found');
+  const c = window.CAMPAIGNS.find(x => x.id===campaignId); if (!c) throw new Error('Campaign not found');
   const user = USERS.find(u => u.id===userId && u.role==='user'); if (!user) throw new Error('User not found');
   if (!c.assignees.includes(user.id)) c.assignees.push(user.id);
   c.status = 'assigned';
@@ -173,39 +175,87 @@ export async function mockAssignCampaignToUser(campaignId, userId, currentUser){
 }
 
 // ----- Template ↔ Campaign helpers -----
+export function getTemplates() {
+  return [...(window.TEMPLATES || [])];
+}
+
 export function getTemplateById(id) {
   id = Number(id);
-  return (TEMPLATES || []).find(t => Number(t.id) === id) || null;
+  return (window.TEMPLATES || []).find(t => Number(t.id) === id) || null;
+}
+
+export function _nextTemplateId() {
+  const arr = window.TEMPLATES || [];
+  return arr.length ? Math.max(...arr.map(t => Number(t.id))) + 1 : 1;
+}
+
+export function createTemplate({ name, html }) {
+  const now = new Date().toISOString();
+  const t = {
+    id: _nextTemplateId(),
+    name: String(name || 'Untitled'),
+    html: String(html || ''),
+    createdAt: now,
+    updatedAt: now,
+  };
+  window.TEMPLATES.push(t);
+  pingChange();
+  return t;
+}
+
+export function updateTemplate(id, patch) {
+  id = Number(id);
+  const t = getTemplateById(id);
+  if (!t) throw new Error('Template not found');
+  Object.assign(t, patch, { updatedAt: new Date().toISOString() });
+  pingChange();
+  return t;
+}
+
+export function deleteTemplate(id) {
+  id = Number(id);
+  window.TEMPLATES = (window.TEMPLATES || []).filter(t => Number(t.id) !== id);
+  // remove template from any campaign templateIds
+  (window.CAMPAIGNS || []).forEach(c => {
+    c.templateIds = (c.templateIds || []).filter(tid => Number(tid) !== id);
+  });
+  pingChange();
 }
 
 export function getCampaigns() {
-  return CAMPAIGNS || [];
+  return [...(window.CAMPAIGNS || [])];
 }
 
 export function getCampaignById(id) {
   id = Number(id);
-  return (CAMPAIGNS || []).find(c => Number(c.id) === id) || null;
+  return (window.CAMPAIGNS || []).find(c => Number(c.id) === id) || null;
 }
 
 export function getCampaignsByTemplateId(templateId) {
-  const id = Number(templateId);
-  return getCampaigns().filter(c => Array.isArray(c.templateIds) && c.templateIds.includes(id));
+  const tid = Number(templateId);
+  return getCampaigns().filter(c => Array.isArray(c.templateIds) && c.templateIds.includes(tid));
 }
 
 export function assignTemplateToCampaign(templateId, campaignId) {
   const c = getCampaignById(campaignId);
   if (!c) throw new Error('Campaign not found');
-  const id = Number(templateId);
-  if (!Array.isArray(c.templateIds)) c.templateIds = [];
-  if (!c.templateIds.includes(id)) c.templateIds.push(id);
+  c.templateIds = Array.isArray(c.templateIds) ? c.templateIds : [];
+  const tid = Number(templateId);
+  if (!c.templateIds.includes(tid)) c.templateIds.push(tid);
+  pingChange();
   return c;
 }
 
 export function unassignTemplateFromCampaign(templateId, campaignId) {
   const c = getCampaignById(campaignId);
-  if (!c || !Array.isArray(c.templateIds)) return c;
-  const id = Number(templateId);
-  c.templateIds = c.templateIds.filter(tid => Number(tid) !== id);
+  if (!c) return null;
+  const tid = Number(templateId);
+  c.templateIds = (c.templateIds || []).filter(id => Number(id) !== tid);
+  pingChange();
   return c;
+}
+
+export function isCampaignAssigned(campaign) {
+  return Array.isArray(campaign?.templateIds) && campaign.templateIds.length > 0;
 }
 
