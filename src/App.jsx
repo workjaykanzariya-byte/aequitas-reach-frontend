@@ -11,13 +11,14 @@ import Health from './pages/Health';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import AdminSettings from './pages/AdminSettings';
-import Campaigns from './pages/Campaigns';
+import Campaigns from './pages/campaigns/CampaignsList';
 import Members from './pages/Members';
 import Users from './pages/Users';
 import Forbidden from './pages/Forbidden';
-import Templates from './pages/Templates';
+import Templates from './pages/templates/TemplatesList';
 import TemplateForm from './pages/TemplateForm';
 import TemplateDetails from './pages/templates/TemplateDetails';
+import CampaignDetails from './pages/campaigns/CampaignDetails';
 
 export default function App(){
   return (
@@ -35,6 +36,7 @@ export default function App(){
           <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard/></Layout></ProtectedRoute>} />
           <Route path="/profile"   element={<ProtectedRoute><Layout><Profile/></Layout></ProtectedRoute>} />
           <Route path="/campaigns" element={<ProtectedRoute><Layout><Campaigns/></Layout></ProtectedRoute>} />
+          <Route path="/campaigns/:id" element={<ProtectedRoute><Layout><CampaignDetails/></Layout></ProtectedRoute>} />
           <Route path="/templates" element={<ProtectedRoute><Layout><Templates/></Layout></ProtectedRoute>} />
           <Route path="/templates/new" element={<ProtectedRoute><Layout><TemplateForm/></Layout></ProtectedRoute>} />
           <Route path="/templates/:id/edit" element={<ProtectedRoute><Layout><TemplateForm/></Layout></ProtectedRoute>} />

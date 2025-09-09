@@ -1,42 +1,47 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import DOMPurify from 'dompurify';
 import {
-  getTemplateById,
-  getCampaigns,
-  getCampaignsByTemplateId,
+  getCampaignById,
+  mockGetTemplates,
   assignTemplateToCampaign,
   unassignTemplateFromCampaign,
 } from '../../lib/api';
 
-export default function TemplateDetails() {
+export default function CampaignDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [template, setTemplate] = useState(null);
-  const [allCampaigns, setAllCampaigns] = useState([]);
-  const [assigned, setAssigned] = useState([]);
-  const [assignTo, setAssignTo] = useState('');
+  const [campaign, setCampaign] = useState(null);
+  const [templates, setTemplates] = useState([]);
+  const [assignId, setAssignId] = useState('');
 
-  const refresh = useCallback(() => {
-    const t = getTemplateById(id);
-    setTemplate(t);
-    setAllCampaigns(getCampaigns());
-    setAssigned(getCampaignsByTemplateId(id));
+  const refresh = useCallback(async () => {
+    const c = getCampaignById(id);
+    setCampaign(c);
+    const ts = await mockGetTemplates();
+    setTemplates(ts);
   }, [id]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
-  const availableToAssign = useMemo(() => {
-    const assignedIds = new Set(assigned.map(c => c.id));
-    return allCampaigns.filter(c => !assignedIds.has(c.id));
-  }, [allCampaigns, assigned]);
+  const assignedTemplates = useMemo(() => {
+    if (!campaign) return [];
+    const ids = new Set(campaign.templateIds || []);
+    return templates.filter((t) => ids.has(t.id));
+  }, [campaign, templates]);
 
-  if (!template) {
+  const availableTemplates = useMemo(() => {
+    const assignedIds = new Set(assignedTemplates.map((t) => t.id));
+    return templates.filter((t) => !assignedIds.has(t.id));
+  }, [templates, assignedTemplates]);
+
+  if (!campaign) {
     return (
       <div className="p-6 space-y-2">
-        <p className="text-sm text-gray-500">Template not found.</p>
+        <p className="text-sm text-gray-500">Campaign not found.</p>
         <button
-          onClick={() => navigate('/templates')}
+          onClick={() => navigate('/campaigns')}
           className="px-3 py-1.5 rounded bg-gray-200 hover:bg-gray-300"
         >
           Back
@@ -46,20 +51,20 @@ export default function TemplateDetails() {
   }
 
   const handleAssign = () => {
-    if (!assignTo) return alert('Please select a campaign');
+    if (!assignId) return alert('Please select a template');
     try {
-      assignTemplateToCampaign(Number(id), Number(assignTo));
+      assignTemplateToCampaign(Number(assignId), Number(id));
       alert('Assigned successfully');
-      setAssignTo('');
+      setAssignId('');
       refresh();
     } catch (e) {
       alert(e.message || 'Failed to assign');
     }
   };
 
-  const handleUnassign = (campaignId) => {
+  const handleUnassign = (templateId) => {
     try {
-      unassignTemplateFromCampaign(Number(id), Number(campaignId));
+      unassignTemplateFromCampaign(Number(templateId), Number(id));
       alert('Unassigned successfully');
       refresh();
     } catch (e) {
@@ -71,13 +76,13 @@ export default function TemplateDetails() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">
-          Template: {template.name} <span className="text-gray-400">(# {template.id})</span>
+          Campaign: {campaign.name} <span className="text-gray-400">(# {campaign.id})</span>
         </h1>
         <Link
-          to="/templates"
+          to="/campaigns"
           className="px-3 py-1.5 rounded bg-gray-200 hover:bg-gray-300"
         >
-          Back to Templates
+          Back to Campaigns
         </Link>
       </div>
 
@@ -85,32 +90,24 @@ export default function TemplateDetails() {
         <h2 className="font-medium text-lg mb-2">Details</h2>
         <div className="text-sm text-gray-700 space-y-1">
           <div>
-            <strong>ID:</strong> {template.id}
+            <strong>ID:</strong> {campaign.id}
           </div>
           <div>
-            <strong>Name:</strong> {template.name}
+            <strong>Name:</strong> {campaign.name}
           </div>
           <div>
-            <strong>Created:</strong> {template.createdAt || '—'}
+            <strong>Status:</strong> {campaign.status || '—'}
           </div>
           <div>
-            <strong>Updated:</strong> {template.updatedAt || '—'}
+            <strong>Description:</strong> {campaign.description || '—'}
           </div>
         </div>
       </section>
 
       <section className="rounded-xl border bg-white p-4 shadow-sm space-y-2">
-        <h2 className="font-medium text-lg mb-2">Content Preview</h2>
-        <div
-          className="prose max-w-none"
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(template.html || '') }}
-        />
-      </section>
-
-      <section className="rounded-xl border bg-white p-4 shadow-sm space-y-2">
-        <h2 className="font-medium text-lg mb-2">Assigned to Campaigns</h2>
-        {assigned.length === 0 ? (
-          <p className="text-sm text-gray-500">No campaigns assigned yet.</p>
+        <h2 className="font-medium text-lg mb-2">Assigned Templates</h2>
+        {assignedTemplates.length === 0 ? (
+          <p className="text-sm text-gray-500">No templates assigned yet.</p>
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-600 text-sm uppercase tracking-wide">
@@ -121,17 +118,17 @@ export default function TemplateDetails() {
               </tr>
             </thead>
             <tbody>
-              {assigned.map((c) => (
-                <tr key={c.id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-3">{c.id}</td>
+              {assignedTemplates.map((t) => (
+                <tr key={t.id} className="border-t hover:bg-gray-50">
+                  <td className="px-4 py-3">{t.id}</td>
                   <td className="px-4 py-3">
-                    <Link to={`/campaigns/${c.id}`} className="text-indigo-600 hover:underline">
-                      {c.name}
+                    <Link to={`/templates/${t.id}`} className="text-indigo-600 hover:underline">
+                      {t.name}
                     </Link>
                   </td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => handleUnassign(c.id)}
+                      onClick={() => handleUnassign(t.id)}
                       className="px-3 py-1.5 rounded bg-red-500 text-white hover:bg-red-600"
                     >
                       Unassign
@@ -145,17 +142,17 @@ export default function TemplateDetails() {
       </section>
 
       <section className="rounded-xl border bg-white p-4 shadow-sm space-y-3">
-        <h2 className="font-medium text-lg mb-2">Assign to a Campaign</h2>
+        <h2 className="font-medium text-lg mb-2">Assign Template</h2>
         <div className="flex gap-3 items-center">
           <select
-            value={assignTo}
-            onChange={(e) => setAssignTo(e.target.value)}
+            value={assignId}
+            onChange={(e) => setAssignId(e.target.value)}
             className="border rounded px-3 py-2 text-sm"
           >
-            <option value="">Select campaign…</option>
-            {availableToAssign.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
+            <option value="">Select template…</option>
+            {availableTemplates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
               </option>
             ))}
           </select>
@@ -170,3 +167,4 @@ export default function TemplateDetails() {
     </div>
   );
 }
+
