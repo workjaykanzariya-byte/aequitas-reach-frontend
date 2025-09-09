@@ -178,6 +178,10 @@ export function getTemplateById(id) {
   return (TEMPLATES || []).find(t => Number(t.id) === id) || null;
 }
 
+export function getTemplates() {
+  return TEMPLATES || [];
+}
+
 export function getCampaigns() {
   return CAMPAIGNS || [];
 }
@@ -188,8 +192,17 @@ export function getCampaignById(id) {
 }
 
 export function getCampaignsByTemplateId(templateId) {
-  const id = Number(templateId);
-  return getCampaigns().filter(c => Array.isArray(c.templateIds) && c.templateIds.includes(id));
+  const tid = Number(templateId);
+  return getCampaigns().filter(
+    c => Array.isArray(c.templateIds) && c.templateIds.includes(tid)
+  );
+}
+
+export function getTemplatesByCampaignId(campaignId) {
+  const cid = Number(campaignId);
+  return getTemplates().filter(
+    t => getCampaignById(cid)?.templateIds?.includes(t.id)
+  );
 }
 
 export function assignTemplateToCampaign(templateId, campaignId) {
