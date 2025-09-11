@@ -97,11 +97,30 @@ export async function mockUpdateAdminSettings(p){ SETTINGS = { ...SETTINGS, ...p
 //// ---------- PEOPLE ----------
 export async function mockGetPeople(role){
   await delay();
-  return USERS.filter(u => u.role === role).map(u => ({ id:u.id, name:u.name, email:u.email, role:u.role }));
+  return USERS.filter(u => u.role === role)
+    .map(u => ({ id:u.id, name:u.name, email:u.email, mobile:u.mobile, role:u.role }));
 }
 export async function mockGetAllPeople(){
   await delay();
-  return USERS.map(u => ({ id:u.id, name:u.name, email:u.email, role:u.role }));
+  return USERS.map(u => ({ id:u.id, name:u.name, email:u.email, mobile:u.mobile, role:u.role }));
+}
+
+// Add many users at once from CSV or other bulk sources
+export async function bulkAddUsers(items){
+  await delay(120);
+  const startId = USERS.reduce((m,u)=>Math.max(m,u.id),0);
+  let nextId = startId;
+  const existingMobiles = new Set(USERS.map(u=>u.mobile));
+  for(const it of items){
+    const name = String(it?.name||'').trim();
+    const mobile = String(it?.mobile||'').trim();
+    if(!name || !/^[0-9]+$/.test(mobile)) continue; // basic validation
+    if(existingMobiles.has(mobile)) continue; // skip duplicates
+    nextId += 1;
+    USERS.push({ id: nextId, name, mobile, role:'user' });
+    existingMobiles.add(mobile);
+  }
+  return USERS.map(u=>({ ...u }));
 }
 
 //// ---------- CONTACTS (optional demo) ----------
